@@ -1,0 +1,22 @@
+{
+  "summary": "Regression smoke test after removing `output: 'standalone'` from next.config.js and cleaning add-ons paragraph from /terms. All five requested flows PASS. Home renders with ₹799, /terms shows flat ₹799 with no add-on/Custom Domain/Concierge mentions, onboard→publish page loads with publish-grand-total=₹799, upi-qr present, UPI id anoopsunny04@ybl present, publish-addons absent, submit-payment-btn produces verification-pending screen (badge went 3→2 pending on admin sidebar after approval). Admin login lands on dashboard (not blank), Payments page lists the ₹799 Deploy & Check item with WA 919000000021, and after APPROVE & PUBLISH the Owner Hub at /hub/manage/<ownerToken> loads LIVE state ('🎊 You're live!', WEBSITE CRAFTED→PAYMENT RECEIVED→YOU'RE LIVE journey, public-link CTA, PAYMENT TIMELINE APPROVED) and is NOT stuck on 'pending payment'.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Admin auth uses localStorage key 'kal_token' — legacy Kalyanam naming; consider renaming to 'vivoha_admin_token' for brand consistency (non-blocking).",
+    "Fonts .woff2 preload warnings in console (preloaded but not used within a few seconds) — harmless but worth cleaning up unused font preloads in Next.js head."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "not tested (skipped per request)", "frontend": "100%" },
+  "test_credentials": "admin@vivoha.in / VivohaAdmin@2026 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created wedding 'Deploy & Check' (slug=deploy-check, ownerToken=kNwdRP3vBRmUYApsmSChy4kDLn2MsRw7) via POST /api/onboard/start, submitted manual payment screenshot from publish page, then APPROVED via admin to verify live-hub flow. Pending payments badge decremented 3→2.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "next.config.js no longer has `output: 'standalone'`; build output is standard .next dir. /terms page copy is scrubbed of Optional add-ons/Custom Domain/Concierge references. Admin endpoints observed: /api/admin/payments, /api/admin/hubs (has ownerToken), /api/admin/badges. Non-existent: /api/admin/weddings, /api/admin/dashboard. Admin JWT is stored in localStorage under 'kal_token'."
+}

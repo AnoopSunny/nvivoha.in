@@ -32,8 +32,8 @@ export default function TermsPage() {
         <li>Studio review, free edits, a thank-you PDF and lifetime hosting.</li>
       </UL>
       <P>
-        Optional add-ons (such as a Custom Domain, the Premium Guest Memories Wall, or Concierge Setup Assistance)
-        are available at checkout. Capacity limits are documented inside your Wedding Hub and may be adjusted over
+        Vivoha is a single flat one-time offer at ₹799 — there are no paid add-ons. Everything listed above is
+        included. Reasonable capacity limits are documented inside your Wedding Hub and may be adjusted over
         time; existing customers will keep the limits they originally received for the duration of their hosting.
       </P>
 
