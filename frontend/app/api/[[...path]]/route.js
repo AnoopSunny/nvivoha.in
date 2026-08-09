@@ -2056,6 +2056,40 @@ async function handler(request, { params }) {
       return ok({ sent: true })
     }
 
+    // Generate a UPI payment QR (server-side, robust) for the manual payment page.
+    if (route === '/upi-qr' && method === 'GET') {
+      const url = new URL(request.url)
+      const amount = Math.max(1, Math.round(Number(url.searchParams.get('amount')) || 2999))
+      const tn = String(url.searchParams.get('note') || 'Vivoha Wedding Website').slice(0, 60)
+      const cfg = await db.collection('settings').findOne({ id: 'payment-config' })
+      const upiId = (cfg?.plans?.vivoha?.upiId) || 'anoopsunny04@ybl'
+      const upiName = cfg?.upiName || 'Vivoha'
+      const params = new URLSearchParams({ pa: upiId, pn: upiName, am: String(amount), cu: 'INR', tn })
+      const upiLink = `upi://pay?${params.toString()}`
+      const format = String(url.searchParams.get('format') || 'json')
+      const QRCode = (await import('qrcode')).default
+      if (format === 'png') {
+        try {
+          const buf = await QRCode.toBuffer(upiLink, { width: 480, margin: 1, type: 'png', color: { dark: '#1F1A14', light: '#FFFFFF' } })
+          return new NextResponse(buf, {
+            status: 200,
+            headers: {
+              'Content-Type': 'image/png',
+              'Cache-Control': 'public, max-age=3600',
+              'Access-Control-Allow-Origin': '*',
+            },
+          })
+        } catch (e) {
+          return err('QR generation failed', 500)
+        }
+      }
+      let qr = null
+      try {
+        qr = await QRCode.toDataURL(upiLink, { width: 480, margin: 1, color: { dark: '#1F1A14', light: '#FFFFFF' } })
+      } catch (_) { qr = null }
+      return ok({ qr, upiLink, upiId, upiName, amount })
+    }
+
     if (route === '/payment-config' && method === 'GET') {
       const cfg = await db.collection('settings').findOne({ id: 'payment-config' })
       const safe = cfg ? { ...cfg } : {}
@@ -2063,13 +2097,15 @@ async function handler(request, { params }) {
       // Defaults — Vivoha is the canonical tier (₹2,999). Legacy plans kept for
       // any historical paymentAttempts that admin may still need to inspect.
       const defaults = {
-        whatsappNumber: '919876543210',
+        whatsappNumber: '917339557802',
+        instagram: 'vivoha.in',
+        upiName: 'Vivoha',
         whatsappGreeting: "Hi Vivoha! I just completed my wedding website setup — can you help me with payment?",
         plans: {
-          vivoha: { upiId: 'vivoha@upi', qrUrl: '', notes: 'Pay ₹2,999 to publish your Vivoha Wedding Experience.' },
-          classic: { upiId: 'vivoha@upi', qrUrl: '', notes: 'Legacy.' },
-          grand: { upiId: 'vivoha@upi', qrUrl: '', notes: 'Legacy.' },
-          elegant: { upiId: 'vivoha@upi', qrUrl: '', notes: 'Legacy.' },
+          vivoha: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Pay ₹2,999 to publish your Vivoha Wedding Experience.' },
+          classic: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Legacy.' },
+          grand: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Legacy.' },
+          elegant: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Legacy.' },
         },
         // Optional add-ons surfaced in the publish flow. Each is a one-time fee
         // added on top of the base ₹2,999.
