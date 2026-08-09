@@ -18,7 +18,7 @@ export default function TermsPage() {
       <H2>1. The service we offer</H2>
       <P>
         Vivoha is a managed studio service. We craft, deploy and host a personal wedding website on your behalf.
-        Our pricing is a single one-time fee — the Vivoha Wedding Experience at ₹2,999 — and includes lifetime
+        Our pricing is a single one-time fee — the Vivoha Wedding Experience at ₹799 — and includes lifetime
         hosting along with concierge support from our studio.
       </P>
 

@@ -438,7 +438,7 @@ export function PaymentSettingsView() {
         const p = form.plans[pid]
         if (!p) return null
         const planLabel = pid === 'vivoha' ? 'Vivoha Wedding Experience' : pid.charAt(0).toUpperCase() + pid.slice(1)
-        const priceLabel = pid === 'vivoha' ? '2,999' : pid === 'classic' ? '1,499' : pid === 'grand' ? '3,499' : '5,999'
+        const priceLabel = pid === 'vivoha' ? '799' : pid === 'classic' ? '1,499' : pid === 'grand' ? '3,499' : '5,999'
         return (
           <section key={pid} className="border border-slate-300 bg-white/40 p-6 mb-5" data-testid={`settings-plan-${pid}`}>
             <h2 className="text-base font-medium text-slate-900 mb-1">{planLabel}{pid !== 'vivoha' && <span className="text-[10px] tracking-widest uppercase text-slate-500 ml-2">· legacy</span>}</h2>

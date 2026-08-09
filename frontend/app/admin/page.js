@@ -506,7 +506,7 @@ function WeddingCard({ w, baseUrl, onEdit, onDelete, onTogglePublish, onViewRsvp
               {w.brideName} <span className="text-slate-400">&amp;</span> {w.groomName}
             </h3>
             <Pill tone={w.status === 'published' ? 'green' : 'amber'}>{w.status}</Pill>
-            {w.plan && <Pill data-testid={`wedding-plan-${w.id}`}>{w.plan === 'vivoha' ? 'Vivoha · ₹2,999' : w.plan}</Pill>}
+            {w.plan && <Pill data-testid={`wedding-plan-${w.id}`}>{w.plan === 'vivoha' ? 'Vivoha · ₹799' : w.plan}</Pill>}
             {w.paymentStatus && w.paymentStatus !== 'not_started' && (
               <Pill tone={w.paymentStatus === 'approved' ? 'green' : w.paymentStatus === 'rejected' ? 'red' : 'amber'}>pmt · {w.paymentStatus}</Pill>
             )}

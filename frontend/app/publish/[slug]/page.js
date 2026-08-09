@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 const BASE = {
   id: 'vivoha',
   name: 'Vivoha Wedding Website',
-  price: 2999,
+  price: 799,
   perks: [
     'All templates',
     'Full RSVP + meal preferences',
@@ -24,12 +24,6 @@ const BASE = {
     'Private link',
     'Lifetime hosting',
   ],
-}
-
-const ADDON_META = {
-  'custom-domain':  { icon: Globe,  subtitle: 'yourname.com or rahul-priya.vivoha.in' },
-  'concierge':      { icon: Wand2,  subtitle: 'We build your website for you — you just approve' },
-  'guest-memories': { icon: Camera, subtitle: 'Unlimited guest photo uploads' },
 }
 
 // Fallbacks — overridden by /api/payment-config when available.
@@ -56,8 +50,6 @@ export default function PublishPage() {
   const onboardToken = sp.get('onboardToken') || ''
 
   const [wedding, setWedding] = useState(null)
-  const [addonsCatalog, setAddonsCatalog] = useState([])
-  const [selectedAddons, setSelectedAddons] = useState([])
   const [payCfg, setPayCfg] = useState(FALLBACK)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(null) // { ownerToken }
@@ -73,7 +65,6 @@ export default function PublishPage() {
   useEffect(() => {
     fetch('/api/payment-config').then(r => r.json()).then(d => {
       const c = d.config || {}
-      if (Array.isArray(c.addons)) setAddonsCatalog(c.addons)
       setPayCfg({
         upiId: c.plans?.vivoha?.upiId || FALLBACK.upiId,
         upiName: c.upiName || FALLBACK.upiName,
@@ -89,7 +80,6 @@ export default function PublishPage() {
     fetch(`/api/onboard/wedding/${onboardToken}`).then(r => r.json()).then(d => {
       if (d.wedding) {
         setWedding(d.wedding)
-        if (Array.isArray(d.wedding.paymentAddons)) setSelectedAddons(d.wedding.paymentAddons)
         // If they already submitted / published, take them to their hub view
         if (['verification_pending', 'approved'].includes(d.wedding.paymentStatus)) {
           if (d.wedding.ownerToken) router.replace(`/hub/manage/${d.wedding.ownerToken}`)
@@ -98,14 +88,7 @@ export default function PublishPage() {
     }).catch(() => {})
   }, [onboardToken, router])
 
-  function toggleAddon(id) {
-    setSelectedAddons(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-  }
-
-  const addonsTotal = useMemo(() => addonsCatalog
-    .filter(a => selectedAddons.includes(a.id))
-    .reduce((s, a) => s + (a.price || 0), 0), [addonsCatalog, selectedAddons])
-  const grandTotal = BASE.price + addonsTotal
+  const grandTotal = BASE.price
 
   // Build UPI intent + QR whenever the total or upi id changes.
   const upiLink = useMemo(() => {
@@ -150,10 +133,10 @@ export default function PublishPage() {
     if (!screenshot?.dataUri) { toast.error('Please attach your payment screenshot'); return }
     setSubmitting(true)
     try {
-      // 1. Save plan + add-ons selection
+      // 1. Save plan selection
       const sel = await fetch(`/api/onboard/select-plan/${onboardToken}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'vivoha', addons: selectedAddons }),
+        body: JSON.stringify({ plan: 'vivoha', addons: [] }),
       })
       const selData = await sel.json()
       if (!sel.ok) throw new Error(selData.error || "Couldn't save your selection")
@@ -245,55 +228,6 @@ export default function PublishPage() {
             </ul>
           </div>
         </section>
-
-        {/* ===== Add-ons ===== */}
-        {addonsCatalog.length > 0 && (
-          <section
-            className="mt-10"
-            data-testid="publish-addons"
-          >
-            <div className="text-[10px] tracking-[0.3em] uppercase text-[#8B7355] mb-4">Optional add-ons</div>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {addonsCatalog.map((a) => {
-                const meta = ADDON_META[a.id] || {}
-                const Icon = meta.icon || Sparkles
-                const selected = selectedAddons.includes(a.id)
-                return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => toggleAddon(a.id)}
-                    data-testid={`addon-${a.id}`}
-                    aria-pressed={selected}
-                    className={`group relative text-left border p-5 transition focus:outline-none ${
-                      selected
-                        ? 'border-[#3A3226] bg-[#3A3226] text-[#FDFBF7]'
-                        : 'border-[#C9B896] bg-white/40 text-[#3A3226] hover:border-[#3A3226]'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className={`w-9 h-9 flex items-center justify-center flex-shrink-0 ${selected ? 'bg-[#C9B896] text-[#1F1A14]' : 'bg-[#3A3226] text-[#C9B896]'}`}>
-                        <Icon size={14} />
-                      </div>
-                      <span className={`w-5 h-5 border flex items-center justify-center transition ${
-                        selected ? 'border-[#C9B896] bg-[#C9B896]' : 'border-[#C9B896]'
-                      }`}>
-                        {selected && <Check size={12} className="text-[#1F1A14]" />}
-                      </span>
-                    </div>
-                    <div className="font-serif text-lg leading-tight">{a.name}</div>
-                    <div className={`text-[12px] mt-2 leading-relaxed ${selected ? 'text-[#FDFBF7]/80' : 'text-[#3A3226]/70'}`}>
-                      {meta.subtitle || a.tagline || a.blurb}
-                    </div>
-                    <div className={`mt-4 pt-3 border-t flex items-center justify-end text-base ${selected ? 'border-[#C9B896]/40' : 'border-[#C9B896]/50'}`}>
-                      <span className="font-serif">+₹{(a.price || 0).toLocaleString('en-IN')}</span>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        )}
 
         {/* ===== Total banner ===== */}
         <div

@@ -25,7 +25,7 @@ const faqs = [
   { q: 'Will my guests need to download anything?', a: 'Nothing to download, nothing to install. Guests open a link — on any phone, any browser. It just works.' },
 ]
 
-const PLAN_PRICE = 2999
+const PLAN_PRICE = 799
 const PLAN_TAGLINE = 'One experience · Every template · Studio-crafted'
 
 const fadeUp = {

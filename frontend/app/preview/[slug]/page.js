@@ -38,14 +38,10 @@ const TEMPLATES = {
   'Jannah Vow': JannahVowTemplate,
 }
 
-const BASE_PRICE = 2999
+const BASE_PRICE = 799
 
-// Cards rendered inside the publish card. Backend remains authoritative
-// on price (synced via /api/payment-config). These act as fallbacks.
-const PUBLISH_CARD_ADDONS_FALLBACK = [
-  { id: 'custom-domain', name: 'Custom Domain',   price: 799,  blurb: 'yourname.com or rahul-priya.vivoha.in' },
-  { id: 'concierge',     name: 'Concierge Setup', price: 1499, blurb: 'We build it for you — you just approve.' },
-]
+// Add-ons removed — Vivoha is a single flat ₹799 offer.
+const PUBLISH_CARD_ADDONS_FALLBACK = []
 
 function formatPreviewExpiry(ts) {
   if (!ts) return ''

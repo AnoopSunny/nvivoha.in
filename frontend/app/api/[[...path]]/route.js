@@ -154,29 +154,8 @@ const PLAN_PRICES = Object.fromEntries(Object.values(PLAN_CONFIG).map(p => [p.id
 // Optional add-ons. Each is a one-time top-up surfaced in the publish flow.
 // Backend is authoritative on price — frontend reads from /payment-config.
 // =====================================================================
-const ADDONS_CATALOG = [
-  {
-    id: 'custom-domain',
-    name: 'Custom Domain',
-    price: 799,
-    blurb: 'yourname.com or rahul-priya.vivoha.in',
-    tagline: 'A wedding URL that feels like yours.',
-  },
-  {
-    id: 'concierge',
-    name: 'Concierge Setup',
-    price: 1499,
-    blurb: 'We build your website for you — you just approve.',
-    tagline: 'You share the moments, we do the rest.',
-  },
-  {
-    id: 'guest-memories',
-    name: 'Guest Wall Premium',
-    price: 299,
-    blurb: 'Unlimited guest photo uploads.',
-    tagline: 'Every moment, kept forever.',
-  },
-]
+// Add-ons removed entirely — Vivoha is a single flat ₹799 offer.
+const ADDONS_CATALOG = []
 const ADDONS_BY_ID = Object.fromEntries(ADDONS_CATALOG.map(a => [a.id, a]))
 
 function computeAddonsTotal(addonIds) {
@@ -2070,7 +2049,7 @@ async function handler(request, { params }) {
     // Generate a UPI payment QR (server-side, robust) for the manual payment page.
     if (route === '/upi-qr' && method === 'GET') {
       const url = new URL(request.url)
-      const amount = Math.max(1, Math.round(Number(url.searchParams.get('amount')) || 2999))
+      const amount = Math.max(1, Math.round(Number(url.searchParams.get('amount')) || 799))
       const tn = String(url.searchParams.get('note') || 'Vivoha Wedding Website').slice(0, 60)
       const cfg = await db.collection('settings').findOne({ id: 'payment-config' })
       const upiId = (cfg?.plans?.vivoha?.upiId) || 'anoopsunny04@ybl'
@@ -2105,7 +2084,7 @@ async function handler(request, { params }) {
       const cfg = await db.collection('settings').findOne({ id: 'payment-config' })
       const safe = cfg ? { ...cfg } : {}
       delete safe._id
-      // Defaults — Vivoha is the canonical tier (₹2,999). Legacy plans kept for
+      // Defaults — Vivoha is the canonical tier (₹799). Legacy plans kept for
       // any historical paymentAttempts that admin may still need to inspect.
       const defaults = {
         whatsappNumber: '917339557802',
@@ -2113,13 +2092,12 @@ async function handler(request, { params }) {
         upiName: 'Vivoha',
         whatsappGreeting: "Hi Vivoha! I just completed my wedding website setup — can you help me with payment?",
         plans: {
-          vivoha: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Pay ₹2,999 to publish your Vivoha Wedding Experience.' },
+          vivoha: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Pay ₹799 to publish your Vivoha Wedding Experience.' },
           classic: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Legacy.' },
           grand: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Legacy.' },
           elegant: { upiId: 'anoopsunny04@ybl', qrUrl: '', notes: 'Legacy.' },
         },
-        // Optional add-ons surfaced in the publish flow. Each is a one-time fee
-        // added on top of the base ₹2,999.
+        // Add-ons removed — flat single price.
         addons: ADDONS_CATALOG,
       }
       return ok({ config: { ...defaults, ...safe, plans: { ...defaults.plans, ...(safe.plans || {}) } } })

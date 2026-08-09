@@ -5,14 +5,14 @@
  */
 
 export const PLAN_CONFIG = {
-  // ===== Vivoha Wedding Experience — the only customer-facing tier (₹2,999) =====
+  // ===== Vivoha Wedding Experience — the only customer-facing tier (₹799) =====
   // Every couple gets the full studio treatment: all templates, photo wall,
   // RSVPs, multi-event timelines, concierge support, lifetime hosting.
   // Limits are generous-but-sane to keep the experience premium.
   vivoha: {
     id: 'vivoha',
     name: 'Vivoha Wedding Experience',
-    price: 2999,
+    price: 799,
     order: 1,
     tagline: 'One studio-crafted experience for every couple.',
     perks: [
