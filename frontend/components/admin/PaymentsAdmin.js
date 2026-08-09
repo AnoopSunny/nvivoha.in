@@ -33,10 +33,23 @@ function fileToDataUri(file) {
   })
 }
 
+// Normalise an Indian mobile/WhatsApp number and build a wa.me deep link.
+function waLink(num, text) {
+  const digits = String(num || '').replace(/\D/g, '')
+  const full = digits.length === 10 ? `91${digits}` : digits
+  return `https://wa.me/${full}?text=${encodeURIComponent(text)}`
+}
+
+const WA_APPROVED = (w) =>
+  `Hi ${w.brideName} & ${w.groomName}! 🎉 Great news — your payment is confirmed and your Vivoha wedding website is now LIVE. Open your Wedding Hub here: ${typeof window !== 'undefined' ? window.location.origin : ''}/hub/manage/${w.ownerToken || ''}\n\nShare your invite with your guests and manage RSVPs anytime. With love, Team Vivoha ✨`
+
+const WA_DECLINED = (w) =>
+  `Hi ${w.brideName} & ${w.groomName}, thank you for your payment submission for your Vivoha wedding website. We couldn't verify the payment screenshot just yet. Could you please re-share a clear screenshot of the successful transaction (with the amount ₹${(w.paymentAmount || 0).toLocaleString('en-IN')} and reference number)? We'll publish your website as soon as it's confirmed. — Team Vivoha`
+
 // =========================================================================
 // PAYMENTS VIEW — list weddings awaiting payment verification
 // =========================================================================
-export function PaymentsView() {
+export function PaymentsView({ onChanged }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('verification_pending')
@@ -49,6 +62,7 @@ export function PaymentsView() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
       setItems(data.weddings || [])
+      onChanged?.()
     } catch (e) { toast.error(e.message) }
     finally { setLoading(false) }
   }
@@ -236,14 +250,47 @@ export function PaymentsView() {
                   >
                     <Send size={11} /> Send note
                   </button>
+                  {(w.ownerWhatsapp || w.onboardPhone) && (
+                    <>
+                      <a
+                        href={waLink(w.ownerWhatsapp || w.onboardPhone, WA_APPROVED(w))}
+                        target="_blank" rel="noreferrer"
+                        data-testid={`pay-wa-approved-${w.id}`}
+                        className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase border border-[#128C3E]/50 text-[#128C3E] px-3 py-1.5 hover:bg-[#25D366]/10"
+                      >
+                        <MessageCircle size={11} /> WA: Approved
+                      </a>
+                      <a
+                        href={waLink(w.ownerWhatsapp || w.onboardPhone, WA_DECLINED(w))}
+                        target="_blank" rel="noreferrer"
+                        data-testid={`pay-wa-declined-${w.id}`}
+                        className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase border border-red-700/50 text-red-700 px-3 py-1.5 hover:bg-red-50"
+                      >
+                        <MessageCircle size={11} /> WA: Declined
+                      </a>
+                    </>
+                  )}
+                </div>
+                {/* Customer contact — full, unmasked for the admin */}
+                <div className="mt-3 border-t border-slate-200 pt-2.5 space-y-1" data-testid={`pay-contact-${w.id}`}>
+                  {(w.ownerWhatsapp || w.onboardPhone) && (
+                    <a
+                      href={waLink(w.ownerWhatsapp || w.onboardPhone, `Hi ${w.brideName} & ${w.groomName}, this is Team Vivoha ✨`)}
+                      target="_blank" rel="noreferrer"
+                      className="text-[12px] font-medium text-slate-900 flex items-center gap-1.5 hover:text-[#128C3E]"
+                      data-testid={`pay-mobile-${w.id}`}
+                    >
+                      <MessageCircle size={12} className="text-[#128C3E]" /> {w.ownerWhatsapp || w.onboardPhone}
+                    </a>
+                  )}
+                  {w.onboardEmail && (
+                    <div className="text-[11px] text-slate-900/55 truncate">📧 {w.onboardEmail}</div>
+                  )}
                 </div>
                 {(w.paymentAttempts?.length > 1) && (
                   <div className="text-[10px] text-slate-500 mt-2 tracking-widest uppercase italic" data-testid={`pay-attempts-${w.id}`}>
                     {w.paymentAttempts.length} payment attempts in history
                   </div>
-                )}
-                {w.onboardEmail && (
-                  <div className="text-[11px] text-slate-900/55 mt-2 truncate">📧 {w.onboardEmail}</div>
                 )}
               </div>
             </motion.div>

@@ -23,14 +23,16 @@ import {
   Crown,
 } from 'lucide-react'
 
-const STUDIO_WHATSAPP = '919876543210'
+const STUDIO_WHATSAPP = '917339557802'
 
 export default function HubView({ data }) {
   const [tab, setTab] = useState('overview')
   if (!data) return null
 
   const isPublished = data.publishedStatus === 'published'
-  const isApproved = data.paymentStatus === 'approved'
+  // A published site is always paid/live — never gate the hub behind payment
+  // once it's live.
+  const isApproved = data.paymentStatus === 'approved' || isPublished
 
   // Tabs: pre-publish shows just Overview + Share. Post-publish unlocks
   // RSVPs, Photos and Analytics.
@@ -99,7 +101,7 @@ export default function HubView({ data }) {
 /* ─────────────── Header ─────────────── */
 
 function HubHeader({ data }) {
-  const isPublished = data.publishedStatus === 'published' && data.paymentStatus === 'approved'
+  const isPublished = data.publishedStatus === 'published'
   const couple = `${data.brideName || ''} & ${data.groomName || ''}`.trim()
   return (
     <>
@@ -149,9 +151,9 @@ function OverviewTab({ data }) {
 
 function HubTimeline({ data }) {
   const ps = data.paymentStatus
-  const isApproved = ps === 'approved'
-  const isPaymentSubmitted = ['verification_pending', 'approved'].includes(ps)
   const isPublished = data.publishedStatus === 'published'
+  const isApproved = ps === 'approved' || isPublished
+  const isPaymentSubmitted = ['verification_pending', 'approved'].includes(ps) || isPublished
 
   const steps = [
     { id: 'created', label: 'Website crafted', done: true },
@@ -195,8 +197,9 @@ function HubTimeline({ data }) {
 
 function PrimaryActions({ data }) {
   const ps = data.paymentStatus
-  const needsPayment = !['verification_pending', 'approved'].includes(ps)
-  const isLive = data.publishedStatus === 'published' && ps === 'approved'
+  const isPublished = data.publishedStatus === 'published'
+  const needsPayment = !['verification_pending', 'approved'].includes(ps) && !isPublished
+  const isLive = isPublished
   const slugFromPreview = data.previewUrl ? data.previewUrl.split('/preview/')[1]?.split('?')[0] : data.slug
   const onboardTokenFromPreview = data.previewUrl?.includes('onboardToken=')
     ? data.previewUrl.split('onboardToken=')[1].split('&')[0]

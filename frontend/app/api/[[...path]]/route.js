@@ -631,6 +631,16 @@ async function handler(request, { params }) {
           }
           update.slug = c
         }
+        // BUGFIX: Publishing a wedding (from admin Weddings section or edit form)
+        // must also mark it PAID and ensure an ownerToken exists, otherwise the
+        // couple's Wedding Hub stays stuck on "pending payment" even though the
+        // site is live. Any publish = paid + hub unlocked.
+        if (update.status === 'published' && w.paymentStatus !== 'approved') {
+          update.paymentStatus = 'approved'
+          update.paymentApprovedAt = new Date()
+          update.paymentApprovedBy = u.id
+          if (!w.ownerToken) update.ownerToken = randomBytes(24).toString('base64url')
+        }
         await db.collection('weddings').updateOne({ id }, { $set: update })
         const updated = await db.collection('weddings').findOne({ id })
         // Log revenue if it just became eligible (plan set, not demo/test, not previously logged)
@@ -1514,12 +1524,13 @@ async function handler(request, { params }) {
       if (!u) return err('Unauthorized', 401)
       const userWeddings = await db.collection('weddings').find({ userId: u.id, deletedAt: { $exists: false } }).project({ id: 1, _id: 0 }).toArray()
       const wids = userWeddings.map(w => w.id)
-      const [photoWallPending, leadsNew, formsSubmitted] = await Promise.all([
+      const [photoWallPending, leadsNew, formsSubmitted, paymentsPending] = await Promise.all([
         db.collection('photo_wall').countDocuments({ weddingId: { $in: wids }, status: 'pending' }),
         db.collection('leads').countDocuments({ status: 'new' }),
         db.collection('forms').countDocuments({ userId: u.id, status: 'submitted' }),
+        db.collection('weddings').countDocuments({ paymentStatus: 'verification_pending', deletedAt: { $exists: false } }),
       ])
-      return ok({ photoWallPending, leadsNew, formsSubmitted })
+      return ok({ photoWallPending, leadsNew, formsSubmitted, paymentsPending })
     }
 
     // ===== INVITE PDF =====
@@ -2506,7 +2517,10 @@ async function handler(request, { params }) {
           paymentAddons: w.paymentAddons || [],
           paymentAddonsAmount: w.paymentAddonsAmount || 0,
           ownerToken: w.ownerToken,
+          ownerWhatsapp: w.ownerWhatsapp || w.onboardPhone || '',
           ownerWhatsappLast4: (w.ownerWhatsapp || '').slice(-4),
+          onboardPhone: w.onboardPhone || '',
+          onboardEmail: w.onboardEmail || '',
           publishCodeSetAt: w.publishCodeSetAt || null,
           rsvpCount: w.rsvpCount || 0,
           viewCount: w.viewCount || 0,
@@ -2555,6 +2569,7 @@ async function handler(request, { params }) {
             paymentApprovedAt: now,
             paymentApprovedBy: u.id,
             status: 'published',
+            ...(w.ownerToken ? {} : { ownerToken: randomBytes(24).toString('base64url') }),
             updatedAt: now,
           },
           // Mark the latest attempt as approved
@@ -2883,6 +2898,17 @@ async function handler(request, { params }) {
       const tok = ownerHub[1]
       const w = await db.collection('weddings').findOne({ ownerToken: tok, deletedAt: { $exists: false } })
       if (!w) return err('Hub not found', 404)
+      // SELF-HEAL: a published site is always paid. Fixes any hub stuck on
+      // "pending payment" because it was published without going through the
+      // payment-approve flow.
+      if (w.status === 'published' && w.paymentStatus !== 'approved') {
+        const now = new Date()
+        await db.collection('weddings').updateOne(
+          { id: w.id },
+          { $set: { paymentStatus: 'approved', paymentApprovedAt: now, paymentApprovedBy: 'auto-published', updatedAt: now } }
+        )
+        w.paymentStatus = 'approved'
+      }
       const proto = request.headers.get('x-forwarded-proto') || 'https'
       const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
       const externalBase = `${proto}://${host}`

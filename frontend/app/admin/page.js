@@ -77,7 +77,7 @@ export default function AdminPage() {
   const [formId, setFormId] = useState(null)
   const [clientAccessWedding, setClientAccessWedding] = useState(null)
   const [invitePwWedding, setInvitePwWedding] = useState(null)
-  const [badges, setBadges] = useState({ photoWallPending: 0, leadsNew: 0, formsSubmitted: 0 })
+  const [badges, setBadges] = useState({ photoWallPending: 0, leadsNew: 0, formsSubmitted: 0, paymentsPending: 0 })
   const [weddings, setWeddings] = useState([])
   const [previews, setPreviews] = useState([])
   const [loading, setLoading] = useState(true)
@@ -103,6 +103,7 @@ export default function AdminPage() {
           photoWallPending: d.photoWallPending || 0,
           leadsNew: d.leadsNew || 0,
           formsSubmitted: d.formsSubmitted || 0,
+          paymentsPending: d.paymentsPending || 0,
         })
       }
     } catch (_) {}
@@ -205,7 +206,7 @@ export default function AdminPage() {
           <NavItem icon={ShieldCheck} label="Owner Hubs" active={view === 'hubs'} onClick={() => setView('hubs')} testId="nav-hubs" />
 
           <SectionLabel>Operations</SectionLabel>
-          <NavItem icon={CreditCard} label="Payments" active={view === 'payments'} onClick={() => setView('payments')} testId="nav-payments" />
+          <NavItem icon={CreditCard} label="Payments" active={view === 'payments'} onClick={() => setView('payments')} testId="nav-payments" badge={badges.paymentsPending} />
           <NavItem icon={FileText} label="Forms" active={view === 'forms' || view === 'forms-detail'} onClick={() => setView('forms')} testId="nav-forms" badge={badges.formsSubmitted} />
           <NavItem icon={Camera} label="Photo Wall" active={view === 'photowall' || view === 'photowall-detail'} onClick={() => setView('photowall')} testId="nav-photo-wall" badge={badges.photoWallPending} />
           <NavItem icon={Inbox} label="Leads" active={view === 'leads'} onClick={() => setView('leads')} testId="nav-leads" badge={badges.leadsNew} />
@@ -274,7 +275,7 @@ export default function AdminPage() {
             <RevenueView />
           )}
           {view === 'payments' && (
-            <PaymentsView />
+            <PaymentsView onChanged={loadBadges} />
           )}
           {view === 'payment-settings' && (
             <PaymentSettingsView />
